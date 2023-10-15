@@ -1,30 +1,29 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 #include "pthread.h"
+#include "semaphore.h"
 
-typedef struct bsem {
-	pthread_mutex_t mutex;
-	pthread_cond_t   cond;
-	int v;
-}bsem;
 
 /* Job */
 typedef struct job{
 	void (*func)(void* arg);       /* function pointer          */
 	void* arg;                      /* function's argument       */
-    struct job* prev;               /* pointer to previous job   */
+    struct job* next;               /* pointer to the next job in the queue  */
 }job;
 
-typedef struct jobqueue{
+/* Queue */
+typedef struct queue{
 	job  *front;                         /* pointer to front of queue */
 	job  *rear;                          /* pointer to rear  of queue */
-	int   len;                           /* number of jobs in queue   */
-    bsem *has_jobs;                      /* flag as binary semaphore  */
-    pthread_mutex_t rwmutex;             /* used for queue r/w access */
-}jobqueue;
+	int  len;                           /* number of jobs in queue   */
+    sem  *empty;                      /* flag as binary semaphore  */
+    pthread_mutex_t rw;             /* used for queue access */
+}queue;
 
 
-
-int jobqueue_init(jobqueue* jobqueue_p);
-
+int queue_init(queue* q);
+void queue_push(queue* q,job* newjob);
+job* queue_pull(queue* q);
+void queue_clear(queue* q);
+void queue_destroy(queue* p);
 #endif
